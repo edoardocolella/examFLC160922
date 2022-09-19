@@ -1,0 +1,230 @@
+/*************************
+ Parser
+**************************/
+
+import java_cup.runtime.*;
+import java.util.*;
+import java.io.*;
+
+init with {:
+    hash = new HashMap();
+:};
+
+action code {:
+     class DistanceClass{
+        private String city;
+        private Double distance;
+
+        DistanceClass(String city, Double distance){
+            this.city = city;
+            this.distance = distance;
+        }
+
+        String getCity(){
+            return this.city;
+        }
+
+        Double getDistance(){
+            return this.distance;
+        }
+     }
+
+
+     class ElevClass{
+        Integer actualSum;
+        Integer lastElev;
+
+        ElevClass(Integer num1, Integer num2){
+            actualSum = num1;
+            lastElev = num2;
+        }
+     }
+:};
+
+parser code 	{:
+
+    public static HashMap hash;
+    
+    public void report_error(String message, Object info) {
+        StringBuffer m = new StringBuffer(message);
+        if (info instanceof Symbol) {
+            if (((Symbol)info).left != 1 && ((Symbol)info).right != 1) {
+                if (((Symbol)info).left != -1 && ((Symbol)info).right != -1) {
+                    int line = (((Symbol)info).left) + 1;
+                    int column = (((Symbol)info).right) + 1;
+                    m.append(" (line " + line + " column " + column + ")");
+                }
+            }
+            System.err.println(m);
+        }
+    }
+    
+    public Object stack(int position) {
+        return (((Symbol)stack.elementAt(tos + position)).value);
+    }
+:};
+
+
+
+//////////////////////////////////
+///// SYMBOLS DECLARATION
+/////////////////////////////////
+
+terminal SEP, TOK1, TOK2, TOK3, C, TO, S, KM, ELEV, M, ROUTE, DD, KCAL;
+terminal String CITY;
+terminal Integer INT_NUM;
+terminal Double REAL_NUM;
+non terminal Integer NT0,routeInfo, elevInfo;
+non terminal ElevClass elevList;
+non terminal Double routeCommand, route, routeList;
+non terminal progr, header, routes, tok12, tok12l, tok1, tok2, tok3;
+non terminal location, distanceList, distance, list_of_pos, pos;
+non terminal commandList, command, elevCommand; 
+
+
+//////////////////////////////////
+///// GRAMMAR
+/////////////////////////////////
+
+start with progr;
+
+progr ::= header SEP location SEP routes;
+
+
+////////
+/// HEADER
+///////
+
+tok1 ::= TOK1 S;
+tok2 ::= TOK2 S;
+tok3 ::= TOK3 S;
+
+header ::= tok12l
+        | tok12l tok3 tok12l
+        | tok12l tok3 tok12l tok3 tok12l tok3 tok12l tok3 tok12l ;
+
+tok12 ::= tok1 | tok2;
+
+tok12l ::= tok12 tok12l 
+| ;
+
+
+
+
+////////
+/// LOCATION
+///////
+
+location ::= distanceList S;
+
+distanceList ::= distance | distanceList S distance;
+
+distance ::= CITY:city list_of_pos:hashMap
+{:
+    parser.hash.put(city, hashMap);
+    //System.out.println(parser.hash.toString());
+:};
+
+list_of_pos ::= pos:p
+{:
+HashMap hash =new HashMap();
+DistanceClass dc = (DistanceClass)p;
+hash.put(dc.getCity(), dc.getDistance());
+RESULT = hash;
+:}
+  | list_of_pos:hash C pos:p
+
+     {:
+        HashMap hashMap = (HashMap)hash;
+        DistanceClass dc = (DistanceClass)p;
+        hashMap.put(dc.getCity(), dc.getDistance());
+        RESULT = hashMap;           
+     :};
+
+pos ::= TO CITY:city REAL_NUM:num KM 
+{: 
+    DistanceClass dis = new DistanceClass(city, num);
+    RESULT = dis;
+:}; 
+        
+
+///////////
+/// ROUTE
+//////////
+
+routes ::= command command command commandList;
+
+commandList ::= command commandList | ;
+
+command ::= elevCommand S
+            | routeCommand S;
+
+
+elevCommand ::= ELEV elevList:num {:
+System.out.println("ELEVATION " + num.actualSum + " m" );
+:};
+
+elevList ::= elevList:num1 C elevInfo:num2 
+{:
+
+/* System.out.println("num1: ");
+System.out.println("lastElev: " + num1.lastElev);
+System.out.println("actualSum: " + num1.actualSum);
+System.out.println("num2: ");
+System.out.println("lastElev: " + num2);
+System.out.println(num2 + " - "+  num1.lastElev + " = " + (num2-num1.lastElev)+ "\n"); */
+ RESULT= new ElevClass(num2-num1.lastElev + num1.actualSum, num2);
+:}
+    | elevInfo:num 
+{:
+    //System.out.println("elevList foglia: " + num);
+    RESULT = new ElevClass(0, num);
+    :};
+
+elevInfo ::= CITY INT_NUM:num M 
+{:
+    //System.out.println("elevInfoFoglia: "+ num);
+RESULT=num;:};
+
+
+routeCommand ::= ROUTE routeInfo DD routeList:val
+{:System.out.println("Tot: "+ val+ " kcal");:};
+
+routeInfo ::= INT_NUM:num {:RESULT=num;:} | 
+                INT_NUM:num KCAL {:RESULT=num;:};
+
+routeList ::= routeList:num1 NT0 C route:num2
+{:
+Double newVal = (Double)num1 + (Double)num2;
+RESULT = newVal;
+:}
+        | route:num 
+            {:
+
+            RESULT = num;
+            :};
+
+NT0 ::= {:
+Integer val= (Integer)parser.stack(-2);
+RESULT=val;
+
+:};
+
+route ::=   CITY:city1 CITY:city2 REAL_NUM:num
+{:
+
+  HashMap innerHash = (HashMap) parser.hash.get(city1);
+  Double number = (Double)innerHash.get(city2);
+  Integer stackNumber = (Integer)parser.stack(-4);
+    Double val = num * number * stackNumber;
+
+    System.out.println(city1 + " " + city2 + " "+ val + " kcal");
+
+   /* System.out.println("Stack value: " + stackNumber);
+  System.out.println("Cities: " + city1 + " "+city2);
+  System.out.println("Distance: " + number);
+  System.out.println("Multiplier: " + num);
+ System.out.println("Val: "+val);
+ System.out.println("");  */
+    RESULT = val;
+:};
