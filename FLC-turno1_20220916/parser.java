@@ -210,21 +210,14 @@ class CUP$parser$actions {
 
 
      class DistanceClass{
-        private String city;
-        private Double distance;
+        String city;
+        Double distance;
 
         DistanceClass(String city, Double distance){
             this.city = city;
             this.distance = distance;
         }
 
-        String getCity(){
-            return this.city;
-        }
-
-        Double getDistance(){
-            return this.distance;
-        }
      }
 
 
@@ -427,7 +420,7 @@ class CUP$parser$actions {
 		
 HashMap hash =new HashMap();
 DistanceClass dc = (DistanceClass)p;
-hash.put(dc.getCity(), dc.getDistance());
+hash.put(dc.city, dc.distance);
 RESULT = hash;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("list_of_pos",18, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -447,7 +440,7 @@ RESULT = hash;
 		
         HashMap hashMap = (HashMap)hash;
         DistanceClass dc = (DistanceClass)p;
-        hashMap.put(dc.getCity(), dc.getDistance());
+        hashMap.put(dc.city, dc.distance);
         RESULT = hashMap;           
      
               CUP$parser$result = parser.getSymbolFactory().newSymbol("list_of_pos",18, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);

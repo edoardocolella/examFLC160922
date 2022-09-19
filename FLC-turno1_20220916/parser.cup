@@ -12,21 +12,14 @@ init with {:
 
 action code {:
      class DistanceClass{
-        private String city;
-        private Double distance;
+        String city;
+        Double distance;
 
         DistanceClass(String city, Double distance){
             this.city = city;
             this.distance = distance;
         }
 
-        String getCity(){
-            return this.city;
-        }
-
-        Double getDistance(){
-            return this.distance;
-        }
      }
 
 
@@ -129,7 +122,7 @@ list_of_pos ::= pos:p
 {:
 HashMap hash =new HashMap();
 DistanceClass dc = (DistanceClass)p;
-hash.put(dc.getCity(), dc.getDistance());
+hash.put(dc.city, dc.distance);
 RESULT = hash;
 :}
   | list_of_pos:hash C pos:p
@@ -137,7 +130,7 @@ RESULT = hash;
      {:
         HashMap hashMap = (HashMap)hash;
         DistanceClass dc = (DistanceClass)p;
-        hashMap.put(dc.getCity(), dc.getDistance());
+        hashMap.put(dc.city, dc.distance);
         RESULT = hashMap;           
      :};
 

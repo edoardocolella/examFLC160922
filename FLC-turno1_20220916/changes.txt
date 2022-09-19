@@ -1,0 +1,7 @@
+scanner.jflex
+- added regular expression of Token3
+
+parser.cup
+- creation of the DistanceClass and ElevClass classes
+- fixed token parsing
+- introduced semantic analysis logic of LOCATION and ROUTE parts
