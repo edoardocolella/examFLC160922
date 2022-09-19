@@ -1,0 +1,132 @@
+/*************************
+ Parser
+**************************/
+
+import java_cup.runtime.*;
+import java.util.*;
+import java.io.*;
+
+
+init with {:
+    new HashMap();
+:};
+
+parser code 	{:
+
+    public static HashMap hash;
+    
+    public void report_error(String message, Object info) {
+        StringBuffer m = new StringBuffer(message);
+        if (info instanceof Symbol) {
+            if (((Symbol)info).left != 1 && ((Symbol)info).right != 1) {
+                if (((Symbol)info).left != -1 && ((Symbol)info).right != -1) {
+                    int line = (((Symbol)info).left) + 1;
+                    int column = (((Symbol)info).right) + 1;
+                    m.append(" (line " + line + " column " + column + ")");
+                }
+            }
+            System.err.println(m);
+        }
+    }
+    
+    public Object stack(int position) {
+        return (((Symbol)stack.elementAt(tos + position)).value);
+    }
+:};
+
+
+
+//////////////////////////////////
+///// SYMBOLS DECLARATION
+/////////////////////////////////
+
+terminal SEP, TOK1, TOK2, TOK3, COMMA, SCL, PROV, KM, ELEV, M, ROUTE, DD, KCAL;
+terminal String CITY, PROV;
+terminal Integer INT_NUM;
+terminal Double REAL_NUM;
+non terminal progr, header, routes, tok12, tok1p, tok2p, tok3p;
+non terminal location, distances, distance, list_of_pos, pos;
+non terminal commands, command, elevCommand, elevInfo, elevList, routeCommand, route, routeInfo, routeList;
+
+
+//////////////////////////////////
+///// GRAMMAR
+/////////////////////////////////
+
+start with progr;
+
+progr ::= header SEP location SEP routes;
+
+
+////////
+/// HEADER
+///////
+
+header ::= tok12
+        | tok12 tok3p tok12
+        | tok12 tok3p tok12 tok12 tok3p tok12 tok12 tok3p tok12 tok12 tok3p tok12
+        ;
+tok12 ::= 
+        | tok12 tok1p
+        | tok12 tok2p
+        | tok1p
+        | tok2p
+;
+tok1p ::= TOK1;
+tok2p ::= TOK2;
+tok3p ::= TOK3;
+
+////////
+/// LOCATION
+///////
+
+location ::= distances;
+
+
+distances ::= distances distance 
+        | distance;
+
+distance ::= CITY:city list_of_pos:hashMap SCL
+{:
+ parser.hash.put(city, hashMap)
+:};
+
+list_of_pos ::= list_of_pos COMMA pos
+        {:
+        parser.hash.put(pos[0], pos[1])
+        :}
+        | pos:hash {:RESULT = hash:};
+
+pos ::= PROV CITY:city REAL_NUM:dis KM
+{:
+    RESULT = new Object[2];
+    RESULT[0] = new String(city);
+    RESULT[1] = new Double(dis);
+:};
+
+
+///////////
+/// ROUTE
+//////////
+
+routes ::= commands command command command command;
+
+commands ::=  commands command
+                | command;
+
+command ::= elevCommand SCL| routeCommand SCL;
+
+elevCommand ::= ELEV elevList;
+
+elevList ::= elevList elevInfo
+            | elevInfo;
+
+elevInfo ::= CITY INT_NUM M ;
+
+routeCommand ::= ROUTE routeInfo DD routeList SCL;
+
+routeInfo ::= INT_NUM | INT_NUM KCAL;
+
+routeList ::= routeList route
+            | route;
+route ::=   CITY CITY INT_NUM;
